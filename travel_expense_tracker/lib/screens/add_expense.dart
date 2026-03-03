@@ -53,7 +53,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               ),
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(labelText: 'Currency'),
-                value: _currency,
+                initialValue: _currency,
                 items: const [
                   DropdownMenuItem(value: 'USD', child: Text('USD')),
                   DropdownMenuItem(value: 'EUR', child: Text('EUR')),
@@ -67,7 +67,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               ),
               DropdownButtonFormField<ExpenseCategory>(
                 decoration: const InputDecoration(labelText: 'Category'),
-                value: _category,
+                initialValue: _category,
                 items: ExpenseCategory.values.map((category) {
                   return DropdownMenuItem(
                     value: category,
