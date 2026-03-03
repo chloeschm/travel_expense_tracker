@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/trip_provider.dart';
 import 'package:intl/intl.dart';
 import '../models/trip.dart';
+import 'add_expense.dart';
 
 class TripDetailScreen extends StatelessWidget {
   final Trip trip;
@@ -41,6 +42,17 @@ class TripDetailScreen extends StatelessWidget {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AddExpenseScreen(tripId: currentTrip.id),
+              ),
+            );
+          },
+          child: const Icon(Icons.add),
+        ),
     );
   }
 }
