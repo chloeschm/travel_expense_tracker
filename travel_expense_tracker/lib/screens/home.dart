@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/trip_provider.dart';
 import 'package:intl/intl.dart';
 import 'add_trip.dart';
+import 'trip_detail.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -23,7 +24,13 @@ class HomeScreen extends StatelessWidget {
               ),
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () {
-                // Navigate to trip details
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        TripDetailScreen(trip: tripProvider.trips[index]),
+                  ),
+                );
               },
             );
           },
