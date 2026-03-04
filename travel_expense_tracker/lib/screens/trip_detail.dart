@@ -24,6 +24,12 @@ class TripDetailScreen extends StatelessWidget {
             Text('Destination: ${currentTrip.destination}', style: const TextStyle(fontSize: 18)),
             const SizedBox(height: 8),
             Text('Dates: ${DateFormat('MMM d, y').format(currentTrip.startDate)} - ${currentTrip.endDate == null ? 'Ongoing' : DateFormat('MMM d, y').format(currentTrip.endDate!)}', style: const TextStyle(fontSize: 18)),
+            const SizedBox(height: 8),
+            Text('Budget: \$${currentTrip.budget.toStringAsFixed(2)} ${currentTrip.currency}', style: const TextStyle(fontSize: 18)),
+            const SizedBox(height: 8),
+            Text('Spent: \$${currentTrip.totalSpent.toStringAsFixed(2)} ${currentTrip.currency}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text('Remaining: \$${currentTrip.remaining.toStringAsFixed(2)} ${currentTrip.currency}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: currentTrip.remaining < 0 ? Colors.red : Colors.green)),
             const SizedBox(height: 16),
             const Text('Expenses:', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             Expanded(

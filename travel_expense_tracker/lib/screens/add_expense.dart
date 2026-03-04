@@ -3,6 +3,9 @@ import '../models/expense.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/trip_provider.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../config.dart';
 
 class AddExpenseScreen extends StatefulWidget {
   final String tripId;
@@ -18,10 +21,69 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   String _title = '';
   double _amount = 0.0;
   String _currency = 'USD';
+  final _naturalLanguageController = TextEditingController();
 
   ExpenseCategory _category = ExpenseCategory.food;
   DateTime _date = DateTime.now();
   String? _notes;
+
+  @override
+  void dispose() {
+    _naturalLanguageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _parseNaturalLanguage(String input) async {
+    try {
+      final response = await http.post(
+        Uri.parse('https://api.openai.com/v1/chat/completions'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${Config.openAiApiKey}',
+        },
+        body: jsonEncode({
+          'model': 'gpt-4o-mini',
+          'messages': [
+            {
+              'role': 'system',
+              'content':
+                  'Today is ${DateFormat('yyyy-MM-dd').format(DateTime.now())}. The users are inputting a travel expense for a specific trip. Read their message and return with an appropriate title, amount (in form of 0.00), currency (default to USD), appropriate category out of food, transport, accommodation, activities, shopping, health, other, and the date (in form of 0000-00-00). Respond in JSON only with no extra text. Respond with raw JSON only. Do not use markdown code fences or any other formatting.',
+            },
+            {'role': 'user', 'content': input},
+          ],
+        }),
+      );
+      
+      final data = jsonDecode(response.body);
+      final content = data['choices'][0]['message']['content'];
+      final cleaned = content
+          .replaceAll('```json', '')
+          .replaceAll('```', '')
+          .trim();
+      final parsed = jsonDecode(cleaned);
+
+      final newExpense = Expense(
+        title: parsed['title'],
+        amount: (parsed['amount'] as num).toDouble(),
+        currency: parsed['currency'] ?? 'USD',
+        category: ExpenseCategory.values.firstWhere(
+          (cat) => cat.toString().split('.').last == parsed['category'],
+          orElse: () => ExpenseCategory.other,
+        ),
+        date: parsed['date'] != null
+            ? DateTime.parse(parsed['date'])
+            : DateTime.now(),
+        notes: null,
+      );
+      context.read<TripProvider>().addExpense(widget.tripId, newExpense);
+      Navigator.pop(context);
+
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not parse expense: $e')));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +96,28 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _naturalLanguageController,
+                      decoration: const InputDecoration(
+                        labelText: 'Quick add',
+                        hintText: 'e.g. spent \$12 on coffee in Tokyo',
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.auto_awesome),
+                    onPressed: () {
+                      if (_naturalLanguageController.text.isNotEmpty) {
+                        _parseNaturalLanguage(_naturalLanguageController.text);
+                      }
+                    },
+                  ),
+                ],
+              ),
+
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Title'),
                 onChanged: (value) {
