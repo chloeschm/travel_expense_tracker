@@ -17,6 +17,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
   final _destinationController = TextEditingController();
   DateTime? _startDate;
   DateTime? _endDate;
+  String _currency = 'USD';
 
   @override
   void dispose() {
@@ -98,6 +99,26 @@ class _AddTripScreenState extends State<AddTripScreen> {
                           : 'End: ${DateFormat('MMM d, y').format(_endDate!)}',
                     ),
                   ),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(labelText: 'Currency'),
+                      value: 'USD',
+                      items: const [
+                        DropdownMenuItem(value: 'USD', child: Text('USD')),
+                        DropdownMenuItem(value: 'EUR', child: Text('EUR')),
+                        DropdownMenuItem(value: 'AUD', child: Text('AUD')),
+                        DropdownMenuItem(value: 'GBP', child: Text('GBP')),
+                        DropdownMenuItem(value: 'JPY', child: Text('JPY')),
+                        DropdownMenuItem(value: 'CNY', child: Text('CNY')),
+                        DropdownMenuItem(value: 'INR', child: Text('INR')),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _currency = value!;
+                        });
+                      },
+                    ),
+                  ),
                 ],
               ),
               const Spacer(),
@@ -110,12 +131,15 @@ class _AddTripScreenState extends State<AddTripScreen> {
                       startDate: _startDate!,
                       endDate: _endDate,
                       budget: 0.0,
+                      currency: _currency,
                     );
                     context.read<TripProvider>().addTrip(newTrip);
                     Navigator.pop(context);
                   } else if (_startDate == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please select a start date')),
+                      const SnackBar(
+                        content: Text('Please select a start date'),
+                      ),
                     );
                   }
                 },

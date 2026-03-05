@@ -53,7 +53,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           ],
         }),
       );
-      
+
       final data = jsonDecode(response.body);
       final content = data['choices'][0]['message']['content'];
       final cleaned = content
@@ -77,7 +77,6 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       );
       context.read<TripProvider>().addExpense(widget.tripId, newExpense);
       Navigator.pop(context);
-
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -136,12 +135,17 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 },
               ),
               DropdownButtonFormField<String>(
+                key: ValueKey(_currency),
                 decoration: const InputDecoration(labelText: 'Currency'),
                 initialValue: _currency,
                 items: const [
                   DropdownMenuItem(value: 'USD', child: Text('USD')),
                   DropdownMenuItem(value: 'EUR', child: Text('EUR')),
+                  DropdownMenuItem(value: 'AUD', child: Text('AUD')),
                   DropdownMenuItem(value: 'GBP', child: Text('GBP')),
+                  DropdownMenuItem(value: 'JPY', child: Text('JPY')),
+                  DropdownMenuItem(value: 'CNY', child: Text('CNY')),
+                  DropdownMenuItem(value: 'INR', child: Text('INR')),
                 ],
                 onChanged: (value) {
                   setState(() {
