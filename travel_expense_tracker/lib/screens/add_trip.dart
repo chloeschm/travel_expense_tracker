@@ -5,7 +5,8 @@ import 'package:intl/intl.dart';
 import '../models/trip.dart';
 
 class AddTripScreen extends StatefulWidget {
-  const AddTripScreen({super.key});
+  const AddTripScreen({super.key, this.existingTrip});
+  final Trip? existingTrip;
 
   @override
   State<AddTripScreen> createState() => _AddTripScreenState();
@@ -18,18 +19,37 @@ class _AddTripScreenState extends State<AddTripScreen> {
   DateTime? _startDate;
   DateTime? _endDate;
   String _currency = 'USD';
+  final _budgetController = TextEditingController();
+  double _budget = 0.0;
 
   @override
   void dispose() {
     _nameController.dispose();
     _destinationController.dispose();
+    _budgetController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.existingTrip != null) {
+      _nameController.text = widget.existingTrip!.name;
+      _destinationController.text = widget.existingTrip!.destination;
+      _startDate = widget.existingTrip!.startDate;
+      _endDate = widget.existingTrip!.endDate;
+      _currency = widget.existingTrip!.currency;
+      _budgetController.text = widget.existingTrip!.budget.toStringAsFixed(2);
+      _budget = widget.existingTrip!.budget;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('New Trip')),
+      appBar: AppBar(
+        title: Text(widget.existingTrip == null ? 'Add Trip' : 'Edit Trip'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -55,6 +75,13 @@ class _AddTripScreenState extends State<AddTripScreen> {
                   }
                   return null;
                 },
+              ),
+              TextFormField(
+                controller: _budgetController,
+                decoration: const InputDecoration(labelText: 'Budget'),
+                keyboardType: TextInputType.number,
+                onChanged: (value) =>
+                    setState(() => _budget = double.tryParse(value) ?? 0.0),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -102,7 +129,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       decoration: const InputDecoration(labelText: 'Currency'),
-                      value: 'USD',
+                      value: _currency,
                       items: const [
                         DropdownMenuItem(value: 'USD', child: Text('USD')),
                         DropdownMenuItem(value: 'EUR', child: Text('EUR')),
@@ -125,15 +152,29 @@ class _AddTripScreenState extends State<AddTripScreen> {
               ElevatedButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate() && _startDate != null) {
-                    final newTrip = Trip(
-                      name: _nameController.text,
-                      destination: _destinationController.text,
-                      startDate: _startDate!,
-                      endDate: _endDate,
-                      budget: 0.0,
-                      currency: _currency,
-                    );
-                    context.read<TripProvider>().addTrip(newTrip);
+                    if (widget.existingTrip != null) {
+                      final updatedTrip = Trip(
+                        id: widget.existingTrip!.id,
+                        name: _nameController.text,
+                        destination: _destinationController.text,
+                        startDate: _startDate!,
+                        endDate: _endDate,
+                        budget: _budget,
+                        currency: _currency,
+                        expenses: widget.existingTrip!.expenses,
+                      );
+                      context.read<TripProvider>().updateTrip(updatedTrip);
+                    } else {
+                      final newTrip = Trip(
+                        name: _nameController.text,
+                        destination: _destinationController.text,
+                        startDate: _startDate!,
+                        endDate: _endDate,
+                        budget: _budget,
+                        currency: _currency,
+                      );
+                      context.read<TripProvider>().addTrip(newTrip);
+                    }
                     Navigator.pop(context);
                   } else if (_startDate == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -143,7 +184,9 @@ class _AddTripScreenState extends State<AddTripScreen> {
                     );
                   }
                 },
-                child: const Text('Save Trip'),
+                child: Text(
+                  widget.existingTrip == null ? 'Add Trip' : 'Save Changes',
+                ),
               ),
             ],
           ),

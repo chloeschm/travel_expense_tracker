@@ -17,21 +17,52 @@ class HomeScreen extends StatelessWidget {
         child: ListView.builder(
           itemCount: tripProvider.trips.length,
           itemBuilder: (context, index) {
-            return ListTile(
-              title: Text(tripProvider.trips[index].name),
-              subtitle: Text(
-                '${tripProvider.trips[index].destination} - ${DateFormat('MMM d, y').format(tripProvider.trips[index].startDate)}',
+            return Dismissible(
+              key: Key(tripProvider.trips[index].id),
+              direction: DismissDirection.endToStart,
+              background: Container(
+                color: Colors.red,
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.only(right: 16),
+                child: const Icon(Icons.delete, color: Colors.white),
               ),
-              trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        TripDetailScreen(trip: tripProvider.trips[index]),
-                  ),
-                );
-              },
+              onDismissed: (_) =>
+                  tripProvider.deleteTrip(tripProvider.trips[index].id),
+              child: ListTile(
+                title: Text(tripProvider.trips[index].name),
+                subtitle: Text(
+                  '${tripProvider.trips[index].destination} - ${DateFormat('MMM d, y').format(tripProvider.trips[index].startDate)}',
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          TripDetailScreen(trip: tripProvider.trips[index]),
+                    ),
+                  );
+                },
+
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AddTripScreen(
+                              existingTrip: tripProvider.trips[index],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const Icon(Icons.arrow_forward_ios),
+                  ],
+                ),
+              ),
             );
           },
         ),

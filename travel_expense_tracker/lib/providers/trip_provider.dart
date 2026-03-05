@@ -12,45 +12,44 @@ class TripProvider extends ChangeNotifier {
   String get _userId => FirebaseAuth.instance.currentUser!.uid;
 
   void listenToTrips() {
-    _db
-        .collection('users')
-        .doc(_userId)
-        .collection('trips')
-        .snapshots()
-        .listen((snapshot) {
-      _trips.clear();
-      for (final doc in snapshot.docs) {
-        final data = doc.data();
-        final expensesData = data['expenses'] as List<dynamic>? ?? [];
-        final expenses = expensesData.map((e) {
-          return Expense(
-            id: e['id'],
-            title: e['title'],
-            amount: (e['amount'] as num).toDouble(),
-            currency: e['currency'],
-            category: ExpenseCategory.values.firstWhere(
-              (cat) => cat.toString().split('.').last == e['category'],
-            ),
-            date: (e['date'] as Timestamp).toDate(),
-            notes: e['notes'],
-          );
-        }).toList();
+    _db.collection('users').doc(_userId).collection('trips').snapshots().listen(
+      (snapshot) {
+        _trips.clear();
+        for (final doc in snapshot.docs) {
+          final data = doc.data();
+          final expensesData = data['expenses'] as List<dynamic>? ?? [];
+          final expenses = expensesData.map((e) {
+            return Expense(
+              id: e['id'],
+              title: e['title'],
+              amount: (e['amount'] as num).toDouble(),
+              currency: e['currency'],
+              category: ExpenseCategory.values.firstWhere(
+                (cat) => cat.toString().split('.').last == e['category'],
+              ),
+              date: (e['date'] as Timestamp).toDate(),
+              notes: e['notes'],
+            );
+          }).toList();
 
-        _trips.add(Trip(
-          id: doc.id,
-          name: data['name'],
-          destination: data['destination'],
-          startDate: (data['startDate'] as Timestamp).toDate(),
-          endDate: data['endDate'] != null
-              ? (data['endDate'] as Timestamp).toDate()
-              : null,
-          budget: (data['budget'] ?? 0.0).toDouble(),
-          currency: data['currency'] ?? 'USD',
-          expenses: expenses,
-        ));
-      }
-      notifyListeners();
-    });
+          _trips.add(
+            Trip(
+              id: doc.id,
+              name: data['name'],
+              destination: data['destination'],
+              startDate: (data['startDate'] as Timestamp).toDate(),
+              endDate: data['endDate'] != null
+                  ? (data['endDate'] as Timestamp).toDate()
+                  : null,
+              budget: (data['budget'] ?? 0.0).toDouble(),
+              currency: data['currency'] ?? 'USD',
+              expenses: expenses,
+            ),
+          );
+        }
+        notifyListeners();
+      },
+    );
   }
 
   Future<void> addTrip(Trip trip) async {
@@ -60,14 +59,14 @@ class TripProvider extends ChangeNotifier {
         .collection('trips')
         .doc(trip.id)
         .set({
-      'name': trip.name,
-      'destination': trip.destination,
-      'startDate': trip.startDate,
-      'endDate': trip.endDate,
-      'budget': trip.budget,
-      'currency': trip.currency,
-      'expenses': [],
-    });
+          'name': trip.name,
+          'destination': trip.destination,
+          'startDate': trip.startDate,
+          'endDate': trip.endDate,
+          'budget': trip.budget,
+          'currency': trip.currency,
+          'expenses': [],
+        });
   }
 
   Future<void> deleteTrip(String id) async {
@@ -87,15 +86,17 @@ class TripProvider extends ChangeNotifier {
         .doc(tripId);
 
     await tripRef.update({
-      'expenses': FieldValue.arrayUnion([{
-        'id': expense.id,
-        'title': expense.title,
-        'amount': expense.amount,
-        'currency': expense.currency,
-        'category': expense.category.toString().split('.').last,
-        'date': expense.date,
-        'notes': expense.notes,
-      }])
+      'expenses': FieldValue.arrayUnion([
+        {
+          'id': expense.id,
+          'title': expense.title,
+          'amount': expense.amount,
+          'currency': expense.currency,
+          'category': expense.category.toString().split('.').last,
+          'date': Timestamp.fromDate(expense.date),
+          'notes': expense.notes,
+        },
+      ]),
     });
   }
 
@@ -110,5 +111,47 @@ class TripProvider extends ChangeNotifier {
     final expenses = List<Map<String, dynamic>>.from(tripDoc['expenses']);
     expenses.removeWhere((e) => e['id'] == expenseId);
     await tripRef.update({'expenses': expenses});
+  }
+
+  Future<void> updateExpense(String tripId, Expense updatedExpense) async {
+    final tripRef = _db
+        .collection('users')
+        .doc(_userId)
+        .collection('trips')
+        .doc(tripId);
+
+    final tripDoc = await tripRef.get();
+    final expenses = List<Map<String, dynamic>>.from(tripDoc['expenses']);
+    final index = expenses.indexWhere((e) => e['id'] == updatedExpense.id);
+    if (index != -1) {
+      expenses[index] = {
+        'id': updatedExpense.id,
+        'title': updatedExpense.title,
+        'amount': updatedExpense.amount,
+        'currency': updatedExpense.currency,
+        'category': updatedExpense.category.toString().split('.').last,
+        'date': Timestamp.fromDate(updatedExpense.date),
+        'notes': updatedExpense.notes,
+      };
+      await tripRef.update({'expenses': expenses});
+    }
+  }
+
+  Future<void> updateTrip(Trip updatedTrip) async {
+    await _db
+        .collection('users')
+        .doc(_userId)
+        .collection('trips')
+        .doc(updatedTrip.id)
+        .update({
+          'name': updatedTrip.name,
+          'destination': updatedTrip.destination,
+          'startDate': Timestamp.fromDate(updatedTrip.startDate),
+          'endDate': updatedTrip.endDate != null
+              ? Timestamp.fromDate(updatedTrip.endDate!)
+              : null,
+          'budget': updatedTrip.budget,
+          'currency': updatedTrip.currency,
+        });
   }
 }

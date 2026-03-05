@@ -11,8 +11,12 @@ import '../config.dart';
 
 class AddExpenseScreen extends StatefulWidget {
   final String tripId;
-
-  const AddExpenseScreen({super.key, required this.tripId});
+  final Expense? existingExpense;
+  const AddExpenseScreen({
+    super.key,
+    required this.tripId,
+    this.existingExpense,
+  });
 
   @override
   State<AddExpenseScreen> createState() => _AddExpenseScreenState();
@@ -49,6 +53,21 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     _amountController.dispose();
     _notesController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.existingExpense != null) {
+      _titleController.text = widget.existingExpense!.title;
+      _amountController.text = widget.existingExpense!.amount.toStringAsFixed(
+        2,
+      );
+      _currency = widget.existingExpense!.currency;
+      _category = widget.existingExpense!.category;
+      _date = widget.existingExpense!.date;
+      _notesController.text = widget.existingExpense!.notes ?? '';
+    }
   }
 
   void _fillFormFromParsed(Map<String, dynamic> parsed) {
@@ -104,9 +123,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       _fillFormFromParsed(parsed);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not parse expense: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not parse expense: $e')));
       }
     } finally {
       setState(() => _isLoading = false);
@@ -118,10 +137,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     if (source == null) return;
 
     final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: source,
-      imageQuality: 85, 
-    );
+    final picked = await picker.pickImage(source: source, imageQuality: 85);
     if (picked == null) return;
 
     setState(() => _isLoading = true);
@@ -139,7 +155,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           'Authorization': 'Bearer ${Config.openAiApiKey}',
         },
         body: jsonEncode({
-          'model': 'gpt-4o', 
+          'model': 'gpt-4o',
           'messages': [
             {'role': 'system', 'content': _systemPrompt},
             {
@@ -147,9 +163,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               'content': [
                 {
                   'type': 'image_url',
-                  'image_url': {
-                    'url': 'data:$mimeType;base64,$base64Image',
-                  },
+                  'image_url': {'url': 'data:$mimeType;base64,$base64Image'},
                 },
                 {
                   'type': 'text',
@@ -180,9 +194,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not scan receipt: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not scan receipt: $e')));
       }
     } finally {
       setState(() => _isLoading = false);
@@ -214,15 +228,28 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
   void _submitManual() {
     if (_formKey.currentState!.validate()) {
-      final newExpense = Expense(
-        title: _title,
-        amount: _amount,
-        currency: _currency,
-        category: _category,
-        date: _date,
-        notes: _notes,
-      );
-      context.read<TripProvider>().addExpense(widget.tripId, newExpense);
+      if (widget.existingExpense == null) {
+        final expense = Expense(
+          title: _title,
+          amount: _amount,
+          currency: _currency,
+          category: _category,
+          date: _date,
+          notes: _notes,
+        );
+        context.read<TripProvider>().addExpense(widget.tripId, expense);
+      } else {
+        final expense = Expense(
+          id: widget.existingExpense!.id,
+          title: _title,
+          amount: _amount,
+          currency: _currency,
+          category: _category,
+          date: _date,
+          notes: _notes,
+        );
+        context.read<TripProvider>().updateExpense(widget.tripId, expense);
+      }
       Navigator.pop(context);
     }
   }
@@ -230,7 +257,11 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Expense')),
+      appBar: AppBar(
+        title: Text(
+          widget.existingExpense == null ? 'Add Expense' : 'Edit Expense',
+        ),
+      ),
       body: Stack(
         children: [
           Padding(
@@ -257,9 +288,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         onPressed: _isLoading
                             ? null
                             : () {
-                                if (_naturalLanguageController.text.isNotEmpty) {
+                                if (_naturalLanguageController
+                                    .text
+                                    .isNotEmpty) {
                                   _parseNaturalLanguage(
-                                      _naturalLanguageController.text);
+                                    _naturalLanguageController.text,
+                                  );
                                 }
                               },
                       ),
@@ -298,8 +332,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       DropdownMenuItem(value: 'CNY', child: Text('CNY')),
                       DropdownMenuItem(value: 'INR', child: Text('INR')),
                     ],
-                    onChanged: (value) =>
-                        setState(() => _currency = value!),
+                    onChanged: (value) => setState(() => _currency = value!),
                   ),
                   DropdownButtonFormField<ExpenseCategory>(
                     key: ValueKey(_category),
@@ -313,8 +346,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         ),
                       );
                     }).toList(),
-                    onChanged: (value) =>
-                        setState(() => _category = value!),
+                    onChanged: (value) => setState(() => _category = value!),
                   ),
                   TextButton(
                     onPressed: () async {
@@ -344,7 +376,11 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _submitManual,
-                      child: const Text('Add Expense'),
+                      child: Text(
+                        widget.existingExpense == null
+                            ? 'Add Expense'
+                            : 'Save Changes',
+                      ),
                     ),
                   ),
                 ],

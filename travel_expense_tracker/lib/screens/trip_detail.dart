@@ -32,7 +32,6 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     final currentTrip = tripProvider.trips.firstWhere(
       (t) => t.id == widget.trip.id,
     );
-
     return Scaffold(
       appBar: AppBar(title: Text(currentTrip.name)),
       body: Padding(
@@ -100,7 +99,6 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
               const CircularProgressIndicator(),
             const Spacer(),
 
-            if (_ratesLoaded)
             const SizedBox(height: 16),
             const Text(
               'Expenses:',
@@ -111,11 +109,45 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                 itemCount: currentTrip.expenses.length,
                 itemBuilder: (context, index) {
                   final expense = currentTrip.expenses[index];
-                  return ListTile(
-                    title: Text(expense.title),
-                    subtitle: Text(DateFormat('MMM d, y').format(expense.date)),
-                    trailing: Text(
-                      '${expense.currency} ${expense.amount.toStringAsFixed(2)}',
+                  return Dismissible(
+                    key: Key(expense.id),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      color: Colors.red,
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 16),
+                      child: const Icon(Icons.delete, color: Colors.white),
+                    ),
+                    onDismissed: (_) {
+                      tripProvider.deleteExpense(currentTrip.id, expense.id);
+                    },
+                    child: ListTile(
+                      title: Text(expense.title),
+                      subtitle: Text(
+                        DateFormat('MMM d, y').format(expense.date),
+                      ),
+                      leading: Text(
+                        '${expense.currency} ${expense.amount.toStringAsFixed(2)}',
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => AddExpenseScreen(
+                                    tripId: currentTrip.id,
+                                    existingExpense: expense,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
