@@ -19,18 +19,10 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
   bool _ratesLoaded = false;
 
   @override
-void initState() {
-  super.initState();
-  _currencyService.fetchRates(widget.trip.currency).then((_) {
-      setState(() {
-        _ratesLoaded = true;
-
-        _currencyService.fetchRates(widget.trip.currency).then((_) {
-          setState(() {
-            _ratesLoaded = true;
-          });
-        });
-      });
+  void initState() {
+    super.initState();
+    _currencyService.fetchRates(widget.trip.currency).then((_) {
+      setState(() => _ratesLoaded = true);
     });
   }
 
@@ -57,30 +49,58 @@ void initState() {
               'Dates: ${DateFormat('MMM d, y').format(currentTrip.startDate)} - ${currentTrip.endDate == null ? 'Ongoing' : DateFormat('MMM d, y').format(currentTrip.endDate!)}',
               style: const TextStyle(fontSize: 18),
             ),
-            const SizedBox(height: 6),
-            Text(
-              'Budget: ${currentTrip.budget.toStringAsFixed(2)} ${currentTrip.currency}',
-              style: const TextStyle(fontSize: 18),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Spent: ${currentTrip.totalSpent.toStringAsFixed(2)} ${currentTrip.currency}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Remaining: ${currentTrip.remaining.toStringAsFixed(2)} ${currentTrip.currency}',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: currentTrip.remaining < 0 ? Colors.red : Colors.green,
+
+            const Spacer(),
+            if (_ratesLoaded) ...[
+              Builder(
+                builder: (context) {
+                  final convertedSpent = currentTrip.expenses
+                      .map(
+                        (e) => _currencyService.convert(
+                          e.amount,
+                          e.currency,
+                          currentTrip.currency,
+                        ),
+                      )
+                      .fold(0.0, (sum, amt) => sum + amt);
+                  final convertedRemaining =
+                      currentTrip.budget - convertedSpent;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Budget: ${currentTrip.budget.toStringAsFixed(2)} ${currentTrip.currency}',
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Spent: ${convertedSpent.toStringAsFixed(2)} ${currentTrip.currency}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Remaining: ${convertedRemaining.toStringAsFixed(2)} ${currentTrip.currency}',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: convertedRemaining < 0
+                              ? Colors.red
+                              : Colors.green,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
-            ),
+            ] else
+              const CircularProgressIndicator(),
+            const Spacer(),
+
             if (_ratesLoaded)
-              Text(
-                'Converted Total: ${currentTrip.expenses.map((e) => _currencyService.convert(e.amount, e.currency, currentTrip.currency)).fold(0.0, (sum, amount) => sum + amount).toStringAsFixed(2)} ${currentTrip.currency}',
-                style: const TextStyle(fontSize: 16, color: Colors.grey),
-              ),
             const SizedBox(height: 16),
             const Text(
               'Expenses:',
