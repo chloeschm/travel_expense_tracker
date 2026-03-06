@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../models/trip.dart';
 import 'add_expense.dart';
 import '../services/currency.dart';
+import 'trip_summary.dart';
 
 class TripDetailScreen extends StatefulWidget {
   final Trip trip;
@@ -33,7 +34,21 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
       (t) => t.id == widget.trip.id,
     );
     return Scaffold(
-      appBar: AppBar(title: Text(currentTrip.name)),
+      appBar: AppBar(title: Text(currentTrip.name),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => TripSummaryScreen(trip: currentTrip),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
