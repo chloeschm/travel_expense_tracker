@@ -7,7 +7,7 @@ enum ExpenseCategory {
   activities,
   shopping,
   health,
-  other
+  other,
 }
 
 class Expense {
@@ -18,6 +18,7 @@ class Expense {
   ExpenseCategory category;
   DateTime date;
   String? notes;
+  String addedBy;
 
   Expense({
     String? id,
@@ -27,5 +28,6 @@ class Expense {
     required this.category,
     required this.date,
     this.notes,
+    required this.addedBy,
   }) : id = id ?? const Uuid().v4();
 }

@@ -6,6 +6,7 @@ import '../models/trip.dart';
 import 'add_expense.dart';
 import '../services/currency.dart';
 import 'trip_summary.dart';
+import 'package:flutter/services.dart';
 
 class TripDetailScreen extends StatefulWidget {
   final Trip trip;
@@ -34,7 +35,8 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
       (t) => t.id == widget.trip.id,
     );
     return Scaffold(
-      appBar: AppBar(title: Text(currentTrip.name),
+      appBar: AppBar(
+        title: Text(currentTrip.name),
         actions: [
           IconButton(
             icon: const Icon(Icons.bar_chart),
@@ -62,6 +64,26 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
             Text(
               'Dates: ${DateFormat('MMM d, y').format(currentTrip.startDate)} - ${currentTrip.endDate == null ? 'Ongoing' : DateFormat('MMM d, y').format(currentTrip.endDate!)}',
               style: const TextStyle(fontSize: 18),
+            ),
+
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: currentTrip.joinCode));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Join code copied!')),
+                );
+              },
+              child: Row(
+                children: [
+                  Text(
+                    'Join code: ${currentTrip.joinCode}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.copy, size: 16),
+                ],
+              ),
             ),
 
             const Spacer(),
@@ -139,7 +161,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                     child: ListTile(
                       title: Text(expense.title),
                       subtitle: Text(
-                        DateFormat('MMM d, y').format(expense.date),
+                        '${DateFormat('MMM d, y').format(expense.date)} · ${expense.addedBy}',
                       ),
                       leading: Text(
                         '${expense.currency} ${expense.amount.toStringAsFixed(2)}',

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/trip_provider.dart';
 import 'package:intl/intl.dart';
 import '../models/trip.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AddTripScreen extends StatefulWidget {
   const AddTripScreen({super.key, this.existingTrip});
@@ -162,6 +163,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
                         budget: _budget,
                         currency: _currency,
                         expenses: widget.existingTrip!.expenses,
+                        createdBy: FirebaseAuth.instance.currentUser!.uid,
                       );
                       context.read<TripProvider>().updateTrip(updatedTrip);
                     } else {
@@ -172,6 +174,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
                         endDate: _endDate,
                         budget: _budget,
                         currency: _currency,
+                        createdBy: FirebaseAuth.instance.currentUser!.uid,
                       );
                       context.read<TripProvider>().addTrip(newTrip);
                     }

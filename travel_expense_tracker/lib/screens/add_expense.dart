@@ -236,6 +236,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           category: _category,
           date: _date,
           notes: _notes,
+          addedBy: context.read<TripProvider>().displayName,
         );
         context.read<TripProvider>().addExpense(widget.tripId, expense);
       } else {
@@ -247,6 +248,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           category: _category,
           date: _date,
           notes: _notes,
+          addedBy: widget.existingExpense!.addedBy,
         );
         context.read<TripProvider>().updateExpense(widget.tripId, expense);
       }
