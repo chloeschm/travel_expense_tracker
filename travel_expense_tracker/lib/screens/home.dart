@@ -14,6 +14,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<TripProvider>().listenToTrips();
+  }
 
   void _showJoinDialog(BuildContext context, TripProvider tripProvider) {
     final controller = TextEditingController();
@@ -38,9 +43,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (ctx.mounted) Navigator.pop(ctx);
               } catch (e) {
                 if (ctx.mounted) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    SnackBar(content: Text(e.toString())),
-                  );
+                  ScaffoldMessenger.of(
+                    ctx,
+                  ).showSnackBar(SnackBar(content: Text(e.toString())));
                 }
               }
             },
@@ -118,8 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) =>
-                                AddTripScreen(existingTrip: trip),
+                            builder: (_) => AddTripScreen(existingTrip: trip),
                           ),
                         );
                       },

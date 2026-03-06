@@ -20,52 +20,58 @@ class TripProvider extends ChangeNotifier {
         .collection('joinedTrips')
         .snapshots()
         .listen((snapshot) async {
-      final trips = <Trip>[];
+          print('joinedTrips snapshot: ${snapshot.docs.length} docs');
+          final trips = <Trip>[];
 
-      for (final doc in snapshot.docs) {
-        final tripDoc = await _db.collection('trips').doc(doc.id).get();
-        if (!tripDoc.exists) continue;
+          for (final doc in snapshot.docs) {
+            final tripDoc = await _db.collection('trips').doc(doc.id).get();
+            print('trip doc exists: ${tripDoc.exists}, id: ${doc.id}');
+            if (!tripDoc.exists) continue;
 
-        final data = tripDoc.data()!;
+            final data = tripDoc.data()!;
 
-        final expensesData = data['expenses'] as List<dynamic>? ?? [];
-        final expenses = expensesData.map((e) {
-          return Expense(
-            id: e['id'],
-            title: e['title'],
-            amount: (e['amount'] as num).toDouble(),
-            currency: e['currency'],
-            category: ExpenseCategory.values.firstWhere(
-              (cat) => cat.toString().split('.').last == e['category'],
-            ),
-            date: (e['date'] as Timestamp).toDate(),
-            notes: e['notes'],
-            addedBy: e['addedBy'] ?? 'Unknown',
-          );
-        }).toList();
+            final expensesData = data['expenses'] as List<dynamic>? ?? [];
 
-        trips.add(Trip(
-          id: tripDoc.id,
-          name: data['name'],
-          destination: data['destination'],
-          startDate: (data['startDate'] as Timestamp).toDate(),
-          endDate: data['endDate'] != null
-              ? (data['endDate'] as Timestamp).toDate()
-              : null,
-          budget: (data['budget'] ?? 0.0).toDouble(),
-          currency: data['currency'] ?? 'USD',
-          expenses: expenses,
-          joinCode: data['joinCode'],
-          members: List<String>.from(data['members'] ?? []),
-          createdBy: data['createdBy'] ?? '',
-        ));
-      }
+            print('expenses in doc: ${expensesData.length}');
+            final expenses = expensesData.map((e) {
+              return Expense(
+                id: e['id'],
+                title: e['title'],
+                amount: (e['amount'] as num).toDouble(),
+                currency: e['currency'],
+                category: ExpenseCategory.values.firstWhere(
+                  (cat) => cat.toString().split('.').last == e['category'],
+                ),
+                date: (e['date'] as Timestamp).toDate(),
+                notes: e['notes'],
+                addedBy: e['addedBy'] ?? 'Unknown',
+              );
+            }).toList();
 
-      _trips
-        ..clear()
-        ..addAll(trips);
-      notifyListeners();
-    });
+            trips.add(
+              Trip(
+                id: tripDoc.id,
+                name: data['name'],
+                destination: data['destination'],
+                startDate: (data['startDate'] as Timestamp).toDate(),
+                endDate: data['endDate'] != null
+                    ? (data['endDate'] as Timestamp).toDate()
+                    : null,
+                budget: (data['budget'] ?? 0.0).toDouble(),
+                currency: data['currency'] ?? 'USD',
+                expenses: expenses,
+                joinCode: data['joinCode'],
+                members: List<String>.from(data['members'] ?? []),
+                createdBy: data['createdBy'] ?? '',
+              ),
+            );
+          }
+
+          _trips
+            ..clear()
+            ..addAll(trips);
+          notifyListeners();
+        });
   }
 
   Future<void> addTrip(Trip trip) async {
@@ -73,8 +79,9 @@ class TripProvider extends ChangeNotifier {
       'name': trip.name,
       'destination': trip.destination,
       'startDate': Timestamp.fromDate(trip.startDate),
-      'endDate':
-          trip.endDate != null ? Timestamp.fromDate(trip.endDate!) : null,
+      'endDate': trip.endDate != null
+          ? Timestamp.fromDate(trip.endDate!)
+          : null,
       'budget': trip.budget,
       'currency': trip.currency,
       'expenses': [],

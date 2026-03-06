@@ -11,13 +11,11 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  final tripProvider = TripProvider();
-  if (FirebaseAuth.instance.currentUser != null) {
-    tripProvider.listenToTrips();
-  }
-
   runApp(
-    ChangeNotifierProvider.value(value: tripProvider, child: const MyApp()),
+    ChangeNotifierProvider(
+      create: (_) => TripProvider(),
+      child: const MyApp(),
+    ),
   );
 }
 
