@@ -5,8 +5,6 @@ import 'package:intl/intl.dart';
 import 'add_trip.dart';
 import 'trip_detail.dart';
 import '../app_theme.dart';
-import 'auth.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../config.dart';
 
 class HomeScreen extends StatefulWidget {

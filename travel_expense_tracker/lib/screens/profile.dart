@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../providers/trip_provider.dart';
 import '../app_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../main.dart';
 import 'auth.dart';
 
 class ProfileScreen extends StatefulWidget {
