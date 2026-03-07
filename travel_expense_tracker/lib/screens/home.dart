@@ -83,18 +83,6 @@ class _HomeScreenState extends State<HomeScreen> {
             tooltip: 'Join a trip',
             onPressed: () => _showJoinDialog(context, tripProvider),
           ),
-          IconButton(
-            icon: const Icon(Icons.logout_outlined),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              if (context.mounted) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AuthScreen()),
-                );
-              }
-            },
-          ),
         ],
       ),
       body: trips.isEmpty
@@ -122,17 +110,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const AddTripScreen()),
-        ),
-        icon: const Icon(Icons.add),
-        label: const Text(
-          'New Trip',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-      ),
     );
   }
 

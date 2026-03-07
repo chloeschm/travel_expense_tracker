@@ -43,11 +43,23 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
   static const _categoryMeta = {
     ExpenseCategory.food: (icon: Icons.restaurant_rounded, label: 'Food'),
-    ExpenseCategory.transport: (icon: Icons.directions_car_rounded, label: 'Transport'),
+    ExpenseCategory.transport: (
+      icon: Icons.directions_car_rounded,
+      label: 'Transport',
+    ),
     ExpenseCategory.accommodation: (icon: Icons.hotel_rounded, label: 'Hotel'),
-    ExpenseCategory.activities: (icon: Icons.local_activity_rounded, label: 'Activities'),
-    ExpenseCategory.shopping: (icon: Icons.shopping_bag_rounded, label: 'Shopping'),
-    ExpenseCategory.health: (icon: Icons.medical_services_rounded, label: 'Health'),
+    ExpenseCategory.activities: (
+      icon: Icons.local_activity_rounded,
+      label: 'Activities',
+    ),
+    ExpenseCategory.shopping: (
+      icon: Icons.shopping_bag_rounded,
+      label: 'Shopping',
+    ),
+    ExpenseCategory.health: (
+      icon: Icons.medical_services_rounded,
+      label: 'Health',
+    ),
     ExpenseCategory.other: (icon: Icons.category_rounded, label: 'Other'),
   };
 
@@ -86,6 +98,20 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     }
   }
 
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialized) return;
+    _initialized = true;
+    if (!_isEditing) {
+      setState(() {
+        _currency = context.read<TripProvider>().preferredCurrency;
+      });
+    }
+  }
+
   void _fillFormFromParsed(Map<String, dynamic> parsed) {
     final title = parsed['title'] as String? ?? '';
     final amount = double.tryParse(parsed['amount']?.toString() ?? '') ?? 0.0;
@@ -118,14 +144,19 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       ),
       builder: (ctx) => Padding(
         padding: EdgeInsets.fromLTRB(
-            20, 16, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+          20,
+          16,
+          20,
+          MediaQuery.of(ctx).viewInsets.bottom + 20,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
               child: Container(
-                width: 40, height: 4,
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
                   color: AppTheme.border,
                   borderRadius: BorderRadius.circular(2),
@@ -133,11 +164,15 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text('AI Parse Text',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            const Text(
+              'AI Parse Text',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 4),
-            const Text('Describe your expense in plain English',
-                style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
+            const Text(
+              'Describe your expense in plain English',
+              style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
+            ),
             const SizedBox(height: 16),
             TextField(
               controller: _aiController,
@@ -161,7 +196,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   backgroundColor: AppTheme.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                   elevation: 0,
                 ),
                 onPressed: () {
@@ -170,9 +206,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     _parseNaturalLanguage(_aiController.text);
                   }
                 },
-                child: const Text('Parse',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                child: const Text(
+                  'Parse',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
               ),
             ),
           ],
@@ -200,13 +237,16 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       );
       final data = jsonDecode(response.body);
       final content = data['choices'][0]['message']['content'] as String;
-      final cleaned =
-          content.replaceAll('```json', '').replaceAll('```', '').trim();
+      final cleaned = content
+          .replaceAll('```json', '')
+          .replaceAll('```', '')
+          .trim();
       _fillFormFromParsed(jsonDecode(cleaned));
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Could not parse: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not parse: $e')));
       }
     } finally {
       setState(() => _isLoading = false);
@@ -256,17 +296,21 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       );
       final data = jsonDecode(response.body);
       final content = data['choices'][0]['message']['content'] as String;
-      final cleaned =
-          content.replaceAll('```json', '').replaceAll('```', '').trim();
+      final cleaned = content
+          .replaceAll('```json', '')
+          .replaceAll('```', '')
+          .trim();
       _fillFormFromParsed(jsonDecode(cleaned));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Receipt scanned — please review')));
+          const SnackBar(content: Text('Receipt scanned — please review')),
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Could not scan receipt: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not scan receipt: $e')));
       }
     } finally {
       setState(() => _isLoading = false);
@@ -284,21 +328,27 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               margin: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                  color: AppTheme.border,
-                  borderRadius: BorderRadius.circular(2)),
+                color: AppTheme.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
             ListTile(
-              leading:
-                  const Icon(Icons.camera_alt_rounded, color: AppTheme.primary),
+              leading: const Icon(
+                Icons.camera_alt_rounded,
+                color: AppTheme.primary,
+              ),
               title: const Text('Take a photo'),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_rounded,
-                  color: AppTheme.primary),
+              leading: const Icon(
+                Icons.photo_library_rounded,
+                color: AppTheme.primary,
+              ),
               title: const Text('Choose from gallery'),
               onTap: () => Navigator.pop(ctx, ImageSource.gallery),
             ),
@@ -313,31 +363,31 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_isEditing) {
       context.read<TripProvider>().updateExpense(
-            widget.tripId,
-            Expense(
-              id: widget.existingExpense!.id,
-              title: _title,
-              amount: _amount,
-              currency: _currency,
-              category: _category,
-              date: _date,
-              notes: _notes,
-              addedBy: widget.existingExpense!.addedBy,
-            ),
-          );
+        widget.tripId,
+        Expense(
+          id: widget.existingExpense!.id,
+          title: _title,
+          amount: _amount,
+          currency: _currency,
+          category: _category,
+          date: _date,
+          notes: _notes,
+          addedBy: widget.existingExpense!.addedBy,
+        ),
+      );
     } else {
       context.read<TripProvider>().addExpense(
-            widget.tripId,
-            Expense(
-              title: _title,
-              amount: _amount,
-              currency: _currency,
-              category: _category,
-              date: _date,
-              notes: _notes,
-              addedBy: context.read<TripProvider>().displayName,
-            ),
-          );
+        widget.tripId,
+        Expense(
+          title: _title,
+          amount: _amount,
+          currency: _currency,
+          category: _category,
+          date: _date,
+          notes: _notes,
+          addedBy: context.read<TripProvider>().displayName,
+        ),
+      );
     }
     Navigator.pop(context);
   }
@@ -349,8 +399,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text(_isEditing ? 'Edit Expense' : 'Add Expense',
-            style: const TextStyle(fontWeight: FontWeight.w700)),
+        title: Text(
+          _isEditing ? 'Edit Expense' : 'Add Expense',
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(height: 1, color: AppTheme.border),
@@ -414,7 +466,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                               validator: (v) =>
                                   v == null || v.isEmpty ? 'Required' : null,
                               onChanged: (v) => setState(
-                                  () => _amount = double.tryParse(v) ?? 0.0),
+                                () => _amount = double.tryParse(v) ?? 0.0,
+                              ),
                             ),
                           ],
                         ),
@@ -432,11 +485,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                               value: _currency,
                               decoration: _inputDecoration(''),
                               items: _currencies
-                                  .map((c) => DropdownMenuItem(
-                                      value: c, child: Text(c)))
+                                  .map(
+                                    (c) => DropdownMenuItem(
+                                      value: c,
+                                      child: Text(c),
+                                    ),
+                                  )
                                   .toList(),
-                              onChanged: (v) =>
-                                  setState(() => _currency = v!),
+                              onChanged: (v) => setState(() => _currency = v!),
                             ),
                           ],
                         ),
@@ -460,20 +516,27 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     borderRadius: BorderRadius.circular(14),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 16),
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF3F4F6),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.calendar_today_outlined,
-                              size: 18, color: AppTheme.textSecondary),
+                          const Icon(
+                            Icons.calendar_today_outlined,
+                            size: 18,
+                            color: AppTheme.textSecondary,
+                          ),
                           const SizedBox(width: 12),
                           Text(
                             DateFormat('MMM d, y').format(_date),
                             style: const TextStyle(
-                                fontSize: 15, color: AppTheme.textPrimary),
+                              fontSize: 15,
+                              color: AppTheme.textPrimary,
+                            ),
                           ),
                         ],
                       ),
@@ -494,7 +557,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 150),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 10),
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
                           decoration: BoxDecoration(
                             color: selected
                                 ? AppTheme.primary
@@ -504,11 +569,13 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(meta.icon,
-                                  size: 16,
-                                  color: selected
-                                      ? Colors.white
-                                      : AppTheme.textSecondary),
+                              Icon(
+                                meta.icon,
+                                size: 16,
+                                color: selected
+                                    ? Colors.white
+                                    : AppTheme.textSecondary,
+                              ),
                               const SizedBox(width: 6),
                               Text(
                                 meta.label,
@@ -532,7 +599,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _notesController,
-                    decoration: _inputDecoration('Add details about this expense...'),
+                    decoration: _inputDecoration(
+                      'Add details about this expense...',
+                    ),
                     maxLines: 3,
                     onChanged: (v) => setState(() => _notes = v),
                   ),
@@ -547,14 +616,17 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         backgroundColor: AppTheme.primary,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                         elevation: 0,
                       ),
                       icon: const Icon(Icons.check_circle_outline, size: 20),
                       label: Text(
                         _isEditing ? 'Save Changes' : 'Save Expense',
                         style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w700),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
@@ -574,27 +646,24 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   }
 
   InputDecoration _inputDecoration(String hint) => InputDecoration(
-        hintText: hint,
-        hintStyle:
-            const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
-        filled: true,
-        fillColor: const Color(0xFFF3F4F6),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide:
-              const BorderSide(color: AppTheme.primary, width: 1.5),
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      );
+    hintText: hint,
+    hintStyle: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+    filled: true,
+    fillColor: const Color(0xFFF3F4F6),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: BorderSide.none,
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+    ),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+  );
 }
 
 class _Label extends StatelessWidget {
@@ -603,11 +672,14 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(text,
-        style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF0F2B2E)));
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF0F2B2E),
+      ),
+    );
   }
 }
 
@@ -616,32 +688,36 @@ class _ActionButton extends StatelessWidget {
   final String label;
   final VoidCallback? onTap;
 
-  const _ActionButton(
-      {required this.icon, required this.label, required this.onTap});
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           color: const Color(0xFFEAF4F4),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-              color: AppTheme.primary.withOpacity(0.2)),
+          border: Border.all(color: AppTheme.primary.withOpacity(0.2)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 18, color: AppTheme.primary),
             const SizedBox(width: 8),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.primary)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.primary,
+              ),
+            ),
           ],
         ),
       ),

@@ -8,10 +8,14 @@ class TripProvider extends ChangeNotifier {
   final List<Trip> _trips = [];
   List<Trip> get trips => List.unmodifiable(_trips);
 
+  String _displayName = 'Traveler';
+  String _preferredCurrency = 'USD';
+
+  String get displayName => _displayName;
+  String get preferredCurrency => _preferredCurrency;
+
   final _db = FirebaseFirestore.instance;
   String get _userId => FirebaseAuth.instance.currentUser!.uid;
-  String get _displayName =>
-      FirebaseAuth.instance.currentUser?.displayName ?? 'Unknown';
 
   Trip _parseTrip(String id, Map<String, dynamic> data) {
     final expensesData = data['expenses'] as List<dynamic>? ?? [];
@@ -48,6 +52,31 @@ class TripProvider extends ChangeNotifier {
     );
   }
 
+  Future<void> loadUserProfile() async {
+    final doc = await _db.collection('users').doc(_userId).get();
+    if (doc.exists && doc.data() != null) {
+      final data = doc.data()!;
+      _displayName = data['displayName'] as String? ?? 'Traveler';
+      _preferredCurrency = data['preferredCurrency'] as String? ?? 'USD';
+    } else {
+      final email = FirebaseAuth.instance.currentUser?.email ?? '';
+      _displayName = email.split('@').first;
+      _preferredCurrency = 'USD';
+      await saveUserProfile(_displayName, _preferredCurrency);
+    }
+    notifyListeners();
+  }
+
+  Future<void> saveUserProfile(String name, String currency) async {
+    _displayName = name;
+    _preferredCurrency = currency;
+    await _db.collection('users').doc(_userId).set({
+      'displayName': name,
+      'preferredCurrency': currency,
+    }, SetOptions(merge: true));
+    notifyListeners();
+  }
+
   void listenToTrips() {
     _db
         .collection('users')
@@ -80,9 +109,8 @@ class TripProvider extends ChangeNotifier {
       'name': trip.name,
       'destination': trip.destination,
       'startDate': Timestamp.fromDate(trip.startDate),
-      'endDate': trip.endDate != null
-          ? Timestamp.fromDate(trip.endDate!)
-          : null,
+      'endDate':
+          trip.endDate != null ? Timestamp.fromDate(trip.endDate!) : null,
       'budget': trip.budget,
       'currency': trip.currency,
       'expenses': [],
@@ -190,6 +218,4 @@ class TripProvider extends ChangeNotifier {
       'members': FieldValue.arrayUnion([_userId]),
     });
   }
-
-  String get displayName => _displayName;
 }

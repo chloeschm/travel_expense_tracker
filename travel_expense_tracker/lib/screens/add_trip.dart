@@ -36,9 +36,13 @@ class _AddTripScreenState extends State<AddTripScreen> {
     ('INR', 'INR (₹)'),
   ];
 
+  bool _initialized = false;
+
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialized) return;
+    _initialized = true;
     if (_isEditing) {
       _nameController.text = widget.existingTrip!.name;
       _destinationController.text = widget.existingTrip!.destination;
@@ -47,6 +51,8 @@ class _AddTripScreenState extends State<AddTripScreen> {
       _currency = widget.existingTrip!.currency;
       _budgetController.text = widget.existingTrip!.budget.toStringAsFixed(2);
       _budget = widget.existingTrip!.budget;
+    } else {
+      _currency = context.read<TripProvider>().preferredCurrency;
     }
   }
 
