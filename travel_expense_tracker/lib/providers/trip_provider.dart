@@ -13,65 +13,66 @@ class TripProvider extends ChangeNotifier {
   String get _displayName =>
       FirebaseAuth.instance.currentUser?.displayName ?? 'Unknown';
 
+  Trip _parseTrip(String id, Map<String, dynamic> data) {
+    final expensesData = data['expenses'] as List<dynamic>? ?? [];
+    final expenses = expensesData.map((e) {
+      return Expense(
+        id: e['id'],
+        title: e['title'],
+        amount: (e['amount'] as num).toDouble(),
+        currency: e['currency'],
+        category: ExpenseCategory.values.firstWhere(
+          (cat) => cat.toString().split('.').last == e['category'],
+          orElse: () => ExpenseCategory.other,
+        ),
+        date: (e['date'] as Timestamp).toDate(),
+        notes: e['notes'],
+        addedBy: e['addedBy'] ?? 'Unknown',
+      );
+    }).toList();
+
+    return Trip(
+      id: id,
+      name: data['name'],
+      destination: data['destination'],
+      startDate: (data['startDate'] as Timestamp).toDate(),
+      endDate: data['endDate'] != null
+          ? (data['endDate'] as Timestamp).toDate()
+          : null,
+      budget: (data['budget'] ?? 0.0).toDouble(),
+      currency: data['currency'] ?? 'USD',
+      expenses: expenses,
+      joinCode: data['joinCode'],
+      members: List<String>.from(data['members'] ?? []),
+      createdBy: data['createdBy'] ?? '',
+    );
+  }
+
   void listenToTrips() {
     _db
         .collection('users')
         .doc(_userId)
         .collection('joinedTrips')
         .snapshots()
-        .listen((snapshot) async {
-          print('joinedTrips snapshot: ${snapshot.docs.length} docs');
-          final trips = <Trip>[];
-
-          for (final doc in snapshot.docs) {
-            final tripDoc = await _db.collection('trips').doc(doc.id).get();
-            print('trip doc exists: ${tripDoc.exists}, id: ${doc.id}');
-            if (!tripDoc.exists) continue;
-
-            final data = tripDoc.data()!;
-
-            final expensesData = data['expenses'] as List<dynamic>? ?? [];
-
-            print('expenses in doc: ${expensesData.length}');
-            final expenses = expensesData.map((e) {
-              return Expense(
-                id: e['id'],
-                title: e['title'],
-                amount: (e['amount'] as num).toDouble(),
-                currency: e['currency'],
-                category: ExpenseCategory.values.firstWhere(
-                  (cat) => cat.toString().split('.').last == e['category'],
-                ),
-                date: (e['date'] as Timestamp).toDate(),
-                notes: e['notes'],
-                addedBy: e['addedBy'] ?? 'Unknown',
-              );
-            }).toList();
-
-            trips.add(
-              Trip(
-                id: tripDoc.id,
-                name: data['name'],
-                destination: data['destination'],
-                startDate: (data['startDate'] as Timestamp).toDate(),
-                endDate: data['endDate'] != null
-                    ? (data['endDate'] as Timestamp).toDate()
-                    : null,
-                budget: (data['budget'] ?? 0.0).toDouble(),
-                currency: data['currency'] ?? 'USD',
-                expenses: expenses,
-                joinCode: data['joinCode'],
-                members: List<String>.from(data['members'] ?? []),
-                createdBy: data['createdBy'] ?? '',
-              ),
-            );
+        .listen((snapshot) {
+      for (final doc in snapshot.docs) {
+        _db
+            .collection('trips')
+            .doc(doc.id)
+            .snapshots()
+            .listen((tripDoc) {
+          if (!tripDoc.exists) return;
+          final trip = _parseTrip(tripDoc.id, tripDoc.data()!);
+          final index = _trips.indexWhere((t) => t.id == tripDoc.id);
+          if (index >= 0) {
+            _trips[index] = trip;
+          } else {
+            _trips.add(trip);
           }
-
-          _trips
-            ..clear()
-            ..addAll(trips);
           notifyListeners();
         });
+      }
+    });
   }
 
   Future<void> addTrip(Trip trip) async {
@@ -100,13 +101,14 @@ class TripProvider extends ChangeNotifier {
 
   Future<void> deleteTrip(String tripId) async {
     await _db.collection('trips').doc(tripId).delete();
-
     await _db
         .collection('users')
         .doc(_userId)
         .collection('joinedTrips')
         .doc(tripId)
         .delete();
+    _trips.removeWhere((t) => t.id == tripId);
+    notifyListeners();
   }
 
   Future<void> updateTrip(Trip updatedTrip) async {

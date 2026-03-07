@@ -6,6 +6,7 @@ import 'providers/trip_provider.dart';
 import 'screens/home.dart';
 import 'screens/auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,10 +27,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Travel Expense Tracker',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.theme,
       home: FirebaseAuth.instance.currentUser != null
           ? const HomeScreen()
           : const AuthScreen(),
